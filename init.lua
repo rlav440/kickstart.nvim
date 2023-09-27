@@ -86,7 +86,7 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim', tag = 'legacy', opts = {} },
+      { 'j-hui/fidget.nvim',       tag = 'legacy', opts = {} },
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
@@ -110,7 +110,8 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim', opts = {} },
+  { 'folke/which-key.nvim', opts = {}
+  },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -128,16 +129,16 @@ require('lazy').setup({
 
         -- don't override the built-in and fugitive keymaps
         local gs = package.loaded.gitsigns
-        vim.keymap.set({'n', 'v'}, ']c', function()
+        vim.keymap.set({ 'n', 'v' }, ']c', function()
           if vim.wo.diff then return ']c' end
           vim.schedule(function() gs.next_hunk() end)
           return '<Ignore>'
-        end, {expr=true, buffer = bufnr, desc = "Jump to next hunk"})
-        vim.keymap.set({'n', 'v'}, '[c', function()
+        end, { expr = true, buffer = bufnr, desc = "Jump to next hunk" })
+        vim.keymap.set({ 'n', 'v' }, '[c', function()
           if vim.wo.diff then return '[c' end
           vim.schedule(function() gs.prev_hunk() end)
           return '<Ignore>'
-        end, {expr=true, buffer = bufnr, desc = "Jump to previous hunk"})
+        end, { expr = true, buffer = bufnr, desc = "Jump to previous hunk" })
       end,
     },
   },
@@ -158,7 +159,7 @@ require('lazy').setup({
       "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
       "MunifTanjim/nui.nvim",
     },
-    config = function ()
+    config = function()
       require('neo-tree').setup {}
     end,
   },
@@ -220,11 +221,26 @@ require('lazy').setup({
     build = ':TSUpdate',
   },
 
+  {
+    "rlav440/kitty-runner.nvim",
+    config = function()
+      local opts = require("kitty-runner.config").window_config
+      require("kitty-runner").setup(opts)
+    end
+  },
+
+  {
+    "ThePrimeagen/Harpoon",
+    config = function()
+      require("harpoon").setup()
+    end
+  },
+
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
-  -- require 'kickstart.plugins.autoformat',
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.autoformat',
+  require 'kickstart.plugins.debug',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
@@ -238,6 +254,7 @@ require('lazy').setup({
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
+vim.wo.relativenumber = true
 
 -- Set highlight on search
 vim.o.hlsearch = false
@@ -286,6 +303,7 @@ vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
 
+
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
 local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
@@ -309,6 +327,62 @@ require('telescope').setup {
     },
   },
 }
+-- This reuired installing uuidgen
+--
+
+
+
+local mark = require("harpoon.mark")
+local ui = require("harpoon.ui")
+vim.keymap.set("n", "<leader>hh", mark.add_file, { desc = "[H]arpoon with [Harpoon]" })
+vim.keymap.set("n", "<leader>hu", ui.toggle_quick_menu, { desc = "[H]arpoon [U]i" })
+
+vim.keymap.set("n", "<leader>h1", function() ui.nav_file(1) end, { desc = "[H]arpoon to file [1]" })
+vim.keymap.set("n", "<leader>h2", function() ui.nav_file(2) end, { desc = "[H]arpoon to file [2]" })
+vim.keymap.set("n", "<leader>h3", function() ui.nav_file(3) end, { desc = "[H]arpoon to file [3]" })
+vim.keymap.set("n", "<leader>h4", function() ui.nav_file(4) end, { desc = "[H]arpoon to file [4]" })
+
+
+CondaSet = "n"
+
+local kr = require("kitty-runner")
+function Manage_conda()
+  if CondaSet == "n" then
+    CondaSet = vim.fn.input("Enter conda env: ")
+    kr.send_command(string.format([[conda activate %s]], CondaSet))
+    kr.send_command("clear")
+  end
+
+  if kr.is_window() == false then
+    kr.send_command(string.format([[conda activate %s]], CondaSet))
+    kr.send_command("clear")
+  end
+end
+
+function Run_current()
+  Manage_conda()
+  local to_run = string.format([[python %s]], vim.fn.expand("%:p"))
+  vim.cmd("wa")
+  kr.send_command(to_run)
+end
+
+function Run_harpooned(n)
+  Manage_conda()
+  local to_run = string.format([[python %s]], mark.get_marked_file_name(n))
+  vim.cmd("wa")
+  kr.send_command(to_run)
+end
+
+vim.keymap.set("n", "<leader>pp", Run_current, { desc = "[P]ython [P]lay current file" })
+vim.keymap.set("n", "<leader>p1", function() Run_harpooned(1) end, { desc = "[P]ython harpoon'd file 1" })
+vim.keymap.set("n", "<leader>p2", function() Run_harpooned(2) end, { desc = "[P]ython harpoon'd file 2" })
+vim.keymap.set("n", "<leader>p3", function() Run_harpooned(3) end, { desc = "[P]ython harpoon'd file 3" })
+vim.keymap.set("n", "<leader>p4", function() Run_harpooned(4) end, { desc = "[P]ython harpoon'd file 4" })
+vim.api.nvim_create_autocmd("ExitPre", { command = [[KittyKillRunner]] })
+
+
+
+
 
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
@@ -331,6 +405,7 @@ vim.keymap.set('n', '<leader>sw', require('telescope.builtin').grep_string, { de
 vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc = '[S]earch by [G]rep' })
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = '[S]earch [R]resume' })
+vim.keymap.set({ 'n', 'v' }, '<leader>f', '<Cmd>Neotree<CR>', { desc = '[F]iles via Neotree' })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
