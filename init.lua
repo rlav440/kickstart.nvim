@@ -373,11 +373,20 @@ function Run_harpooned(n)
   kr.send_command(to_run)
 end
 
+function Run_documentation()
+  Manage_conda()
+  vim.cmd("wa")
+  local pwd = vim.fn.getcwd()
+  kr.send_command(string.format([[python -m sphinx %s/docs/source %s/docs/build]], pwd, pwd))
+end
+
 vim.keymap.set("n", "<leader>pp", Run_current, { desc = "[P]ython [P]lay current file" })
 vim.keymap.set("n", "<leader>p1", function() Run_harpooned(1) end, { desc = "[P]ython harpoon'd file 1" })
 vim.keymap.set("n", "<leader>p2", function() Run_harpooned(2) end, { desc = "[P]ython harpoon'd file 2" })
 vim.keymap.set("n", "<leader>p3", function() Run_harpooned(3) end, { desc = "[P]ython harpoon'd file 3" })
 vim.keymap.set("n", "<leader>p4", function() Run_harpooned(4) end, { desc = "[P]ython harpoon'd file 4" })
+vim.keymap.set("n", "<leader>pd", Run_documentation, { desc = "[p]ython build [d]ocumentation" })
+
 vim.api.nvim_create_autocmd("ExitPre", { command = [[KittyKillRunner]] })
 
 
@@ -411,7 +420,8 @@ vim.keymap.set({ 'n', 'v' }, '<leader>f', '<Cmd>Neotree<CR>', { desc = '[F]iles 
 -- See `:help nvim-treesitter`
 require('nvim-treesitter.configs').setup {
   -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim' },
+  ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim',
+    'cuda', 'cmake' },
 
   -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
   auto_install = false,
