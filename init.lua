@@ -222,6 +222,7 @@ require('lazy').setup({
     "rlav440/kitty-runner.nvim",
     config = function()
       local opts = require("kitty-runner.config").window_config
+      --opts.kitty_port = "127.0.0.1:4444"
       require("kitty-runner").setup(opts)
     end
   },
@@ -340,6 +341,7 @@ vim.keymap.set("n", "<leader>h3", function() ui.nav_file(3) end, { desc = "[H]ar
 vim.keymap.set("n", "<leader>h4", function() ui.nav_file(4) end, { desc = "[H]arpoon to file [4]" })
 
 
+-- CODE TO MANAGE MY RUNNING
 CondaSet = "n"
 
 local kr = require("kitty-runner")
@@ -347,11 +349,13 @@ function Manage_conda()
   if CondaSet == "n" then
     CondaSet = vim.fn.input("Enter conda env: ")
     kr.send_command(string.format([[conda activate %s]], CondaSet))
+    vim.wait(10)
     kr.send_command("clear")
   end
 
   if kr.is_window() == false then
     kr.send_command(string.format([[conda activate %s]], CondaSet))
+    vim.wait(10)
     kr.send_command("clear")
   end
 end
@@ -360,6 +364,8 @@ function Run_current()
   Manage_conda()
   local to_run = string.format([[python %s]], vim.fn.expand("%:p"))
   vim.cmd("wa")
+  kr.send_command("q")
+  vim.wait(10)
   kr.send_command(to_run)
 end
 
@@ -388,7 +394,15 @@ vim.api.nvim_create_autocmd("ExitPre", { command = [[KittyKillRunner]] })
 
 
 
+function debug_run_lines()
+  local yanked_text = vim.fn.getreg('"0', 1, true)
+  for _, line in ipairs(yanked_text) do
+    kr.send_command(line)
+    vim.wait(10)
+  end
+end
 
+vim.keymap.set("n", "<leader>p<leader>", debug_run_lines, { desc = "[p]ython debug selection" })
 
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
